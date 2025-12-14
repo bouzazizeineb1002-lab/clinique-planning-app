@@ -1,7 +1,4 @@
-# app.py - Version complète avec ordonnancement horaire et compatibilité
-# ============================================================================
-# IMPORTS
-# ============================================================================
+# Code complet corrigé - app.py
 import streamlit as st
 import pulp
 import pandas as pd
@@ -18,22 +15,6 @@ def appliquer_ordonnancement_horaire(planning_brut, heure_debut="08:00",
                                      regle_ordre="duree_desc"):
     """
     RÈGLE D'ORDONNANCEMENT ACADÉMIQUE - Post-traitement du modèle MILP
-    
-    Cette fonction applique la règle LPT (Longest Processing Time) standard :
-    1. Groupe les patients par salle et jour
-    2. Trie par durée décroissante (règle LPT)
-    3. Assigne les heures de début/fin de manière séquentielle
-    4. Ajoute des pauses entre interventions
-    
-    Args:
-        planning_brut: Résultat du modèle d'optimisation MILP
-        heure_debut: "HH:MM" début des opérations
-        heure_fin: "HH:MM" fin des opérations  
-        pause: minutes entre interventions
-        regle_ordre: 'duree_desc' (LPT), 'priorite', 'fifo', 'mixte'
-    
-    Returns:
-        Planning horaire complet avec heures précises
     """
     # Conversion heures en minutes
     h_debut = int(heure_debut.split(':')[0])*60 + int(heure_debut.split(':')[1])
@@ -65,31 +46,22 @@ def appliquer_ordonnancement_horaire(planning_brut, heure_debut="08:00",
     # 3. Pour chaque groupe, appliquer la règle d'ordonnancement
     for (salle_id, jour_numero), patients in groupes.items():
         
-        # RÈGLE DE TRI (cœur de l'ordonnancement)
+        # RÈGLE DE TRI
         if regle_ordre == 'duree_desc':
-            # RÈGLE LPT : Longest Processing Time First
             patients_tries = sorted(patients, 
                                    key=lambda x: x.get('patient_duree', 0), 
                                    reverse=True)
-        
         elif regle_ordre == 'priorite':
-            # Règle par priorité clinique
             patients_tries = sorted(patients, 
                                    key=lambda x: x.get('priorite', 999))
-        
         elif regle_ordre == 'fifo':
-            # First In First Out (par ID patient)
             patients_tries = sorted(patients, 
                                    key=lambda x: x.get('patient_id', ''))
-        
         elif regle_ordre == 'mixte':
-            # Règle hybride : priorité puis durée
             patients_tries = sorted(patients,
                                    key=lambda x: (x.get('priorite', 999), 
                                                  -x.get('patient_duree', 0)))
-        
         else:
-            # Par défaut : LPT
             patients_tries = sorted(patients, 
                                    key=lambda x: x.get('patient_duree', 0), 
                                    reverse=True)
@@ -174,7 +146,7 @@ with st.sidebar:
          "👥 Patients", 
          "🚪 Salles", 
          "👨‍⚕️ Chirurgiens",
-         "⚖️ Compatibilité",  # NOUVELLE PAGE
+         "⚖️ Compatibilité",
          "📅 Configuration",
          "🔧 Optimisation",
          "📋 Planning Final"]
@@ -268,7 +240,6 @@ elif page == "👥 Patients":
         
         if st.form_submit_button("💾 Enregistrer"):
             if patient_id and nom and prenom:
-                # Vérifier si ID existe déjà
                 ids_existants = [p['id'] for p in st.session_state.patients]
                 if patient_id in ids_existants:
                     st.error(f"ID {patient_id} existe déjà !")
@@ -300,12 +271,10 @@ elif page == "🚪 Salles":
     with st.form("form_salle"):
         salle_id = st.text_input("ID Salle*")
         nom_salle = st.text_input("Nom Salle*")
-        capacite = st.number_input("Capacité (min/jour)*", 240, 1440, 480,
-                                 help="Capacité quotidienne en minutes (ex: 480 = 8h)")
+        capacite = st.number_input("Capacité (min/jour)*", 240, 1440, 480)
         
         if st.form_submit_button("➕ Ajouter"):
             if salle_id and nom_salle:
-                # Vérifier si ID existe déjà
                 ids_existants = [s['id'] for s in st.session_state.salles]
                 if salle_id in ids_existants:
                     st.error(f"ID {salle_id} existe déjà !")
@@ -336,12 +305,10 @@ elif page == "👨‍⚕️ Chirurgiens":
         specialite = st.selectbox("Spécialité", 
                                  ["Cardiologie", "Orthopédie", "Générale", 
                                   "Neurologie", "Pédiatrie", "Traumatologie"])
-        disponibilite = st.number_input("Disponibilité (min/jour)*", 240, 600, 360,
-                                       help="Disponibilité quotidienne en minutes")
+        disponibilite = st.number_input("Disponibilité (min/jour)*", 240, 600, 360)
         
         if st.form_submit_button("👨‍⚕️ Ajouter"):
             if chir_id and nom and prenom:
-                # Vérifier si ID existe déjà
                 ids_existants = [c['id'] for c in st.session_state.chirurgiens]
                 if chir_id in ids_existants:
                     st.error(f"ID {chir_id} existe déjà !")
@@ -362,7 +329,7 @@ elif page == "👨‍⚕️ Chirurgiens":
         st.dataframe(df, use_container_width=True)
 
 # ============================================================================
-# PAGE COMPATIBILITÉ (NOUVELLE PAGE)
+# PAGE COMPATIBILITÉ
 # ============================================================================
 elif page == "⚖️ Compatibilité":
     st.header("⚖️ Compatibilité Patients-Chirurgiens")
@@ -372,7 +339,6 @@ elif page == "⚖️ Compatibilité":
     else:
         # Initialisation si vide
         if not st.session_state.compatibilite:
-            # Par défaut, tous compatibles (1)
             for patient in st.session_state.patients:
                 for chirurgien in st.session_state.chirurgiens:
                     cle = (patient['id'], chirurgien['id'])
@@ -530,7 +496,7 @@ elif page == "🔧 Optimisation":
         with st.spinner("Optimisation en cours (modèle + ordonnancement)..."):
             try:
                 # ============================================================
-                # ÉTAPE 1 : MODÈLE MATHÉMATIQUE (VOTRE CODE ACTUEL)
+                # ÉTAPE 1 : MODÈLE MATHÉMATIQUE
                 # ============================================================
                 
                 # Préparation des données pour le modèle
@@ -550,12 +516,11 @@ elif page == "🔧 Optimisation":
                 a = {(s_id, k): next(c['disponibilite'] for c in st.session_state.chirurgiens if c['id'] == s_id)
                      for s_id in S for k in K}
                 
-                # MATRICE DE COMPATIBILITÉ (m) - CORRECTION ICI
+                # MATRICE DE COMPATIBILITÉ (m)
                 m = {}
                 for patient in st.session_state.patients:
                     for chirurgien in st.session_state.chirurgiens:
                         cle = (patient['id'], chirurgien['id'])
-                        # Utiliser la valeur de compatibilité (0 ou 1)
                         m[cle] = st.session_state.compatibilite.get(cle, 1)
                 
                 # Création du modèle MILP
@@ -583,7 +548,7 @@ elif page == "🔧 Optimisation":
                     for k in K:
                         prob += pulp.lpSum(t[i] * y[i][j][s][k] for i in I for j in J) <= a[(s, k)], f"SurgeonCap_{s}_{k}"
                 
-                # CONTRAINTE DE COMPATIBILITÉ - CORRECTION ICI
+                # CONTRAINTE DE COMPATIBILITÉ
                 for i in I:
                     for j in J:
                         for s in S:
@@ -795,34 +760,4 @@ elif page == "📋 Planning Final":
             ))
             
             if jours_planifies:
-                jour_selectionne = st.selectbox("Choisir un jour", jours_planifies)
-                
-                # Filtrer pour ce jour
-                rdvs_jour = [
-                    rdv for rdv in st.session_state.planning_final
-                    if rdv.get('jour_date') == jour_selectionne and rdv.get('heure_debut') != 'N/A'
-                ]
-                
-                if rdvs_jour:
-                    # Afficher par salle
-                    for salle in sorted(set(r['salle_nom'] for r in rdvs_jour)):
-                        with st.expander(f"🚪 {salle}", expanded=True):
-                            rdvs_salle = [
-                                r for r in rdvs_jour 
-                                if r['salle_nom'] == salle
-                            ]
-                            rdvs_salle.sort(key=lambda x: x.get('heure_debut_min', 0))
-                            
-                            for rdv in rdvs_salle:
-                                col1, col2, col3 = st.columns([4, 3, 3])
-                                with col1:
-                                    st.write(f"**{rdv['patient_nom']}**")
-                                with col2:
-                                    st.write(f"🕒 {rdv['heure_debut']} - {rdv['heure_fin']}")
-                                with col3:
-                                    st.write(f"⏱️ {rdv['patient_duree']} min")
-                                
-                                # Barre de progression pour visualisation
-                                duree = rdv['patient_duree']
-                                duree_max = 600  # 10h en minutes
-                                progression = min(duree /
+                jour_selectionne = st.selectbox("

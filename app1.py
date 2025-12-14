@@ -760,4 +760,50 @@ elif page == "📋 Planning Final":
             ))
             
             if jours_planifies:
-                jour_selectionne = st.selectbox("
+             jour_selectionne = st.selectbox("Choisir un jour", jours_planifies)
+        with tab2:
+            # Vue par jour
+            jours_planifies = sorted(set(
+                rdv['jour_date'] for rdv in st.session_state.planning_final 
+                if rdv.get('heure_debut') != 'N/A'
+            ))
+            
+            if jours_planifies:
+                jour_selectionne = st.selectbox("Choisir un jour", jours_planifies)
+                
+                # Filtrer pour ce jour
+                rdvs_jour = [
+                    rdv for rdv in st.session_state.planning_final
+                    if rdv.get('jour_date') == jour_selectionne and rdv.get('heure_debut') != 'N/A'
+                ]
+                
+                if rdvs_jour:
+                    # Afficher par salle
+                    for salle in sorted(set(r['salle_nom'] for r in rdvs_jour)):
+                        with st.expander(f"🚪 {salle}", expanded=True):
+                            rdvs_salle = [
+                                r for r in rdvs_jour 
+                                if r['salle_nom'] == salle
+                            ]
+                            rdvs_salle.sort(key=lambda x: x.get('heure_debut_min', 0))
+                            
+                            for rdv in rdvs_salle:
+                                col1, col2, col3 = st.columns([4, 3, 3])
+                                with col1:
+                                    st.write(f"**{rdv['patient_nom']}**")
+                                with col2:
+                                    st.write(f"🕒 {rdv['heure_debut']} - {rdv['heure_fin']}")
+                                with col3:
+                                    st.write(f"⏱️ {rdv['patient_duree']} min")
+                                
+                                # Barre de progression pour visualisation
+                                duree = rdv['patient_duree']
+                                duree_max = 600  # 10h en minutes
+                                progression = min(duree / duree_max, 1.0)
+                                
+                                st.progress(
+                                    progression,
+                                    text=f"{rdv['heure_debut']} → {rdv['heure_fin']} ({duree} min)"
+                                )
+                else:
+                    st.info(f"Aucune intervention le {jour_selectionne}")

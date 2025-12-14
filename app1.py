@@ -816,4 +816,4 @@ elif page == "📋 Planning Final":
             
             # Calcul des statistiques
             total_patients = len(st.session_state.planning_final)
-            patients_planifies = sum(1 for r in st.session_state.planning_final
+            patients_planifies = sum(1 for r in st.session_state.planning_final)

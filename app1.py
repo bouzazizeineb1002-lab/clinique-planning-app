@@ -149,7 +149,8 @@ with st.sidebar:
          "⚖️ Compatibilité",
          "📅 Configuration",
          "🔧 Optimisation",
-         "📋 Planning Final"]
+         "📋 Planning Final"],
+        key="navigation_menu"  # Clé unique ajoutée
     )
     
     st.divider()
@@ -163,7 +164,7 @@ with st.sidebar:
         compat_count = len(st.session_state.compatibilite)
         st.metric("Compatibilités", compat_count)
     
-    if st.button("🔄 Réinitialiser", type="secondary"):
+    if st.button("🔄 Réinitialiser", type="secondary", key="reset_button"):
         for key in ['patients', 'salles', 'chirurgiens', 'jours', 'compatibilite', 'planning_final']:
             st.session_state[key] = [] if key != 'compatibilite' else {}
         st.rerun()
@@ -227,18 +228,18 @@ elif page == "👥 Patients":
         col1, col2 = st.columns(2)
         
         with col1:
-            patient_id = st.text_input("ID Patient*")
-            nom = st.text_input("Nom*")
-            prenom = st.text_input("Prénom*")
-            age = st.number_input("Âge", 0, 120, 45)
+            patient_id = st.text_input("ID Patient*", key="patient_id_input")
+            nom = st.text_input("Nom*", key="patient_nom_input")
+            prenom = st.text_input("Prénom*", key="patient_prenom_input")
+            age = st.number_input("Âge", 0, 120, 45, key="patient_age_input")
         
         with col2:
-            duree = st.number_input("Durée opération (min)*", 15, 480, 120)
+            duree = st.number_input("Durée opération (min)*", 15, 480, 120, key="patient_duree_input")
             priorite = st.selectbox("Priorité", [1, 2, 3, 4, 5], 
-                                   help="1 = Plus urgent, 5 = Moins urgent")
-            type_interv = st.selectbox("Type", ["Cardiaque", "Orthopédique", "Générale", "Neurologique"])
+                                   help="1 = Plus urgent, 5 = Moins urgent", key="patient_priorite_input")
+            type_interv = st.selectbox("Type", ["Cardiaque", "Orthopédique", "Générale", "Neurologique"], key="patient_type_input")
         
-        if st.form_submit_button("💾 Enregistrer"):
+        if st.form_submit_button("💾 Enregistrer", key="patient_save_button"):
             if patient_id and nom and prenom:
                 ids_existants = [p['id'] for p in st.session_state.patients]
                 if patient_id in ids_existants:
@@ -269,11 +270,11 @@ elif page == "🚪 Salles":
     st.header("🚪 Gestion des Salles")
     
     with st.form("form_salle"):
-        salle_id = st.text_input("ID Salle*")
-        nom_salle = st.text_input("Nom Salle*")
-        capacite = st.number_input("Capacité (min/jour)*", 240, 1440, 480)
+        salle_id = st.text_input("ID Salle*", key="salle_id_input")
+        nom_salle = st.text_input("Nom Salle*", key="salle_nom_input")
+        capacite = st.number_input("Capacité (min/jour)*", 240, 1440, 480, key="salle_capacite_input")
         
-        if st.form_submit_button("➕ Ajouter"):
+        if st.form_submit_button("➕ Ajouter", key="salle_save_button"):
             if salle_id and nom_salle:
                 ids_existants = [s['id'] for s in st.session_state.salles]
                 if salle_id in ids_existants:
@@ -299,15 +300,15 @@ elif page == "👨‍⚕️ Chirurgiens":
     st.header("👨‍⚕️ Gestion des Chirurgiens")
     
     with st.form("form_chir"):
-        chir_id = st.text_input("ID Chirurgien*")
-        nom = st.text_input("Nom*")
-        prenom = st.text_input("Prénom*")
+        chir_id = st.text_input("ID Chirurgien*", key="chir_id_input")
+        nom = st.text_input("Nom*", key="chir_nom_input")
+        prenom = st.text_input("Prénom*", key="chir_prenom_input")
         specialite = st.selectbox("Spécialité", 
                                  ["Cardiologie", "Orthopédie", "Générale", 
-                                  "Neurologie", "Pédiatrie", "Traumatologie"])
-        disponibilite = st.number_input("Disponibilité (min/jour)*", 240, 600, 360)
+                                  "Neurologie", "Pédiatrie", "Traumatologie"], key="chir_specialite_input")
+        disponibilite = st.number_input("Disponibilité (min/jour)*", 240, 600, 360, key="chir_dispo_input")
         
-        if st.form_submit_button("👨‍⚕️ Ajouter"):
+        if st.form_submit_button("👨‍⚕️ Ajouter", key="chir_save_button"):
             if chir_id and nom and prenom:
                 ids_existants = [c['id'] for c in st.session_state.chirurgiens]
                 if chir_id in ids_existants:
@@ -372,11 +373,12 @@ elif page == "⚖️ Compatibilité":
                 ) for ch in st.session_state.chirurgiens}
             },
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
+            key="compat_data_editor"
         )
         
         # Sauvegarder les modifications
-        if st.button("💾 Enregistrer les compatibilités"):
+        if st.button("💾 Enregistrer les compatibilités", key="compat_save_button"):
             for idx, row in edited_df.iterrows():
                 patient_id = row['Patient'].split(" - ")[0]
                 for chirurgien in st.session_state.chirurgiens:
@@ -393,12 +395,12 @@ elif page == "⚖️ Compatibilité":
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Total paires", total_compat)
+            st.metric("Total paires", total_compat, key="compat_total_metric")
         with col2:
-            st.metric("Compatibles", compat_oui)
+            st.metric("Compatibles", compat_oui, key="compat_yes_metric")
         with col3:
             taux = (compat_oui / total_compat * 100) if total_compat > 0 else 0
-            st.metric("Taux compatibilité", f"{taux:.1f}%")
+            st.metric("Taux compatibilité", f"{taux:.1f}%", key="compat_rate_metric")
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -411,10 +413,10 @@ elif page == "📅 Configuration":
     with col1:
         # Jours de planning
         st.subheader("Jours de planning")
-        nb_jours = st.number_input("Nombre de jours", 1, 14, 5)
-        date_debut = st.date_input("Date de début", datetime.now())
+        nb_jours = st.number_input("Nombre de jours", 1, 14, 5, key="nb_jours_input")
+        date_debut = st.date_input("Date de début", datetime.now(), key="date_debut_input")
         
-        if st.button("📅 Générer les jours"):
+        if st.button("📅 Générer les jours", key="generate_days_button"):
             st.session_state.jours = []
             for i in range(nb_jours):
                 date_jour = date_debut + timedelta(days=i)
@@ -469,15 +471,17 @@ elif page == "🔧 Optimisation":
         with col1:
             heure_debut = st.time_input(
                 "Heure de début",
-                value=datetime.strptime("08:00", "%H:%M").time()
+                value=datetime.strptime("08:00", "%H:%M").time(),
+                key="heure_debut_input"
             )
             heure_fin = st.time_input(
                 "Heure de fin",
-                value=datetime.strptime("18:00", "%H:%M").time()
+                value=datetime.strptime("18:00", "%H:%M").time(),
+                key="heure_fin_input"
             )
         
         with col2:
-            pause = st.number_input("Pause entre interventions (min)", 0, 60, 15)
+            pause = st.number_input("Pause entre interventions (min)", 0, 60, 15, key="pause_input")
             regle = st.selectbox(
                 "Règle d'ordre dans la journée",
                 [
@@ -486,13 +490,14 @@ elif page == "🔧 Optimisation":
                     ("fifo", "FIFO - Premier arrivé"),
                     ("mixte", "Hybride (priorité puis durée)")
                 ],
-                format_func=lambda x: x[1]
+                format_func=lambda x: x[1],
+                key="regle_ordo_input"
             )
     
     # BOUTON D'OPTIMISATION
     st.divider()
     
-    if st.button("🚀 Lancer l'optimisation complète", type="primary", use_container_width=True):
+    if st.button("🚀 Lancer l'optimisation complète", type="primary", use_container_width=True, key="optimize_button"):
         with st.spinner("Optimisation en cours (modèle + ordonnancement)..."):
             try:
                 # ============================================================
@@ -663,7 +668,7 @@ elif page == "📋 Planning Final":
         5. Lancer l'optimisation complète
         """)
         
-        if st.button("Aller à l'optimisation"):
+        if st.button("Aller à l'optimisation", key="goto_optimization_button"):
             st.rerun()
     else:
         # Afficher les paramètres utilisés
@@ -672,13 +677,13 @@ elif page == "📋 Planning Final":
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Règle", params.get('regle', 'LPT'))
+                st.metric("Règle", params.get('regle', 'LPT'), key="metric_regle")
             with col2:
-                st.metric("Plage horaire", f"{params.get('heure_debut')}-{params.get('heure_fin')}")
+                st.metric("Plage horaire", f"{params.get('heure_debut')}-{params.get('heure_fin')}", key="metric_plage")
             with col3:
-                st.metric("Pause", f"{params.get('pause')} min")
+                st.metric("Pause", f"{params.get('pause')} min", key="metric_pause")
             with col4:
-                st.metric("Statut modèle", params.get('modele_statut', 'N/A'))
+                st.metric("Statut modèle", params.get('modele_statut', 'N/A'), key="metric_statut")
         
         # Créer le DataFrame final
         planning_data = []
@@ -724,7 +729,7 @@ elif page == "📋 Planning Final":
         # AFFICHAGE PRINCIPAL
         st.subheader("Planning horaire complet")
         
-        # Onglets
+        # Onglets - AJOUT DE CLÉS UNIQUES
         tab1, tab2, tab3 = st.tabs(["📋 Tableau complet", "🗓️ Vue par jour", "📊 Statistiques"])
         
         with tab1:
@@ -740,7 +745,8 @@ elif page == "📋 Planning Final":
                     )
                 },
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
+                key="planning_table"
             )
             
             # Export
@@ -749,27 +755,24 @@ elif page == "📋 Planning Final":
                 "📥 Télécharger CSV",
                 csv_data,
                 "planning_chirurgical.csv",
-                "text/csv"
+                "text/csv",
+                key="download_csv_button"
             )
         
         with tab2:
-            # Vue par jour
+            # Vue par jour - CORRECTION ICI : AJOUT DE KEY UNIQUE
             jours_planifies = sorted(set(
                 rdv['jour_date'] for rdv in st.session_state.planning_final 
                 if rdv.get('heure_debut') != 'N/A'
             ))
             
             if jours_planifies:
-             jour_selectionne = st.selectbox("Choisir un jour", jours_planifies)
-        with tab2:
-            # Vue par jour
-            jours_planifies = sorted(set(
-                rdv['jour_date'] for rdv in st.session_state.planning_final 
-                if rdv.get('heure_debut') != 'N/A'
-            ))
-            
-            if jours_planifies:
-                jour_selectionne = st.selectbox("Choisir un jour", jours_planifies)
+                # CORRECTION : Clé unique ajoutée
+                jour_selectionne = st.selectbox(
+                    "Choisir un jour", 
+                    jours_planifies,
+                    key="select_jour_vue_jour"  # Clé unique pour cet onglet
+                )
                 
                 # Filtrer pour ce jour
                 rdvs_jour = [
@@ -799,11 +802,4 @@ elif page == "📋 Planning Final":
                                 # Barre de progression pour visualisation
                                 duree = rdv['patient_duree']
                                 duree_max = 600  # 10h en minutes
-                                progression = min(duree / duree_max, 1.0)
-                                
-                                st.progress(
-                                    progression,
-                                    text=f"{rdv['heure_debut']} → {rdv['heure_fin']} ({duree} min)"
-                                )
-                else:
-                    st.info(f"Aucune intervention le {jour_selectionne}")
+                               

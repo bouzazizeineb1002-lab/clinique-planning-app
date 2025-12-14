@@ -150,7 +150,7 @@ with st.sidebar:
          "📅 Configuration",
          "🔧 Optimisation",
          "📋 Planning Final"],
-        key="navigation_menu"  # Clé unique ajoutée
+        key="navigation_menu"
     )
     
     st.divider()
@@ -395,12 +395,12 @@ elif page == "⚖️ Compatibilité":
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Total paires", total_compat, key="compat_total_metric")
+            st.metric("Total paires", total_compat)
         with col2:
-            st.metric("Compatibles", compat_oui, key="compat_yes_metric")
+            st.metric("Compatibles", compat_oui)
         with col3:
             taux = (compat_oui / total_compat * 100) if total_compat > 0 else 0
-            st.metric("Taux compatibilité", f"{taux:.1f}%", key="compat_rate_metric")
+            st.metric("Taux compatibilité", f"{taux:.1f}%")
 
 # ============================================================================
 # PAGE CONFIGURATION
@@ -677,13 +677,13 @@ elif page == "📋 Planning Final":
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Règle", params.get('regle', 'LPT'), key="metric_regle")
+                st.metric("Règle", params.get('regle', 'LPT'))
             with col2:
-                st.metric("Plage horaire", f"{params.get('heure_debut')}-{params.get('heure_fin')}", key="metric_plage")
+                st.metric("Plage horaire", f"{params.get('heure_debut')}-{params.get('heure_fin')}")
             with col3:
-                st.metric("Pause", f"{params.get('pause')} min", key="metric_pause")
+                st.metric("Pause", f"{params.get('pause')} min")
             with col4:
-                st.metric("Statut modèle", params.get('modele_statut', 'N/A'), key="metric_statut")
+                st.metric("Statut modèle", params.get('modele_statut', 'N/A'))
         
         # Créer le DataFrame final
         planning_data = []
@@ -729,7 +729,7 @@ elif page == "📋 Planning Final":
         # AFFICHAGE PRINCIPAL
         st.subheader("Planning horaire complet")
         
-        # Onglets - AJOUT DE CLÉS UNIQUES
+        # Onglets
         tab1, tab2, tab3 = st.tabs(["📋 Tableau complet", "🗓️ Vue par jour", "📊 Statistiques"])
         
         with tab1:
@@ -760,18 +760,17 @@ elif page == "📋 Planning Final":
             )
         
         with tab2:
-            # Vue par jour - CORRECTION ICI : AJOUT DE KEY UNIQUE
+            # Vue par jour
             jours_planifies = sorted(set(
                 rdv['jour_date'] for rdv in st.session_state.planning_final 
                 if rdv.get('heure_debut') != 'N/A'
             ))
             
             if jours_planifies:
-                # CORRECTION : Clé unique ajoutée
                 jour_selectionne = st.selectbox(
                     "Choisir un jour", 
                     jours_planifies,
-                    key="select_jour_vue_jour"  # Clé unique pour cet onglet
+                    key="select_jour_vue_jour"
                 )
                 
                 # Filtrer pour ce jour
@@ -802,4 +801,19 @@ elif page == "📋 Planning Final":
                                 # Barre de progression pour visualisation
                                 duree = rdv['patient_duree']
                                 duree_max = 600  # 10h en minutes
-                               
+                                progression = min(duree / duree_max, 1.0)
+                                
+                                st.progress(
+                                    progression,
+                                    text=f"{rdv['heure_debut']} → {rdv['heure_fin']} ({duree} min)"
+                                )
+                else:
+                    st.info(f"Aucune intervention le {jour_selectionne}")
+        
+        with tab3:
+            # Statistiques
+            st.subheader("📊 Statistiques du planning")
+            
+            # Calcul des statistiques
+            total_patients = len(st.session_state.planning_final)
+            patients_planifies = sum(1 for r in st.session_state.planning_final
